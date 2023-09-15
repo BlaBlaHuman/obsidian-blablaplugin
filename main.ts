@@ -43,12 +43,6 @@ export default class BlaBlaPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
