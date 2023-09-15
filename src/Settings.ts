@@ -36,6 +36,7 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+        this.containerEl.createEl("h1", { text: "Template expanding" });
 
         new Setting(containerEl)
 			.setName('Migrate settings from buildin `Templates` plugin')
@@ -79,6 +80,8 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 					this.plugin.settings.timeFormat = value == "" ? DEFAULT_SETTINGS.timeFormat : value;
 					await this.plugin.saveSettings();
 				}));
+
+        this.containerEl.createEl("h1", { text: "Copy plain Markdown" });
 
 		new Setting(containerEl)
 			.setName("Remove Wikilink brackets")
