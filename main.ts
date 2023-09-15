@@ -1,80 +1,53 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, SuggestModal, Plugin } from 'obsidian';
+import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
+import { getVaultPath } from 'src/Utils';
+import { getExpandedTemplate } from 'src/Utils';
+import * as path from "path"
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface ITemplateSettings {
+	templateFolder?: string;
+	dateFormat?: string;
+	timeFormat?: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+export interface ITemplate {
+	templatePath: string;
+	templateName: string;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class BlaBlaPlugin extends Plugin {
+	settings: PluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
+			id: 'expand-template',
+			name: 'Expand template',
+			hotkeys: [{ modifiers: ["Mod"], key: "y" }],
+			editorCallback: (editor: any) => this.expandTemplate(editor)
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
+
 		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
+			id: 'copy-plain-markdown',
+			name: 'Copy plain markdown',
+			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
+			editorCallback: (editor: any) => this.copyPlainMarkdown(editor)
 		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
+
 		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
+			id: 'copy-structural-formatting',
+			name: 'Copy structural formatting only',
+			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "x" }],
+			editorCallback: (editor: any) => this.copyStructuralFormatting(editor)
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
 			console.log('click', evt);
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
@@ -89,46 +62,119 @@ export default class MyPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	async copyPlainMarkdown(editor: Editor) {
+		const noteFile = this.app.workspace.getActiveFile();
+		if (!noteFile?.name) return;
+
+		let text = await this.app.vault.read(noteFile);
+		text = text.replace(/\[\[.*?\]\]/g, '');
+		text = text.replace(/---.*?---/g, '');
+
+		text = text.replace(/==/g, '');
+		text = text.replace(/\^\w+/g, '');
+		if (this.settings.removeBrackets) {
+			text = text.replace(/\[\[(.*?)\]\]/g, '$1');
+		}
+
+		if (this.settings.removeEmphasis) {
+			text = text.replace(/[*~]+(\w+)[*~]+/g, '$1');
+		}
+
+		if (this.settings.removeTags) {
+			text = text.replace(/#\w+/g, '');
+		}
+
+		if (this.settings.removeComments) {
+			text = text.replace(/%%.+%%/g, '');
+		}
+
+		var blob = new Blob([text], { type: 'text/plain' });
+		const data = [new ClipboardItem({
+			["text/plain"]: blob,
+		})];
+		navigator.clipboard.write(data);
+	}
+
+	async copyStructuralFormatting(editor: Editor) {
+		const noteFile = this.app.workspace.getActiveFile();
+		if (!noteFile?.name) return;
+
+		let text = await this.app.vault.read(noteFile);
+		text = text.replace(/\[\[.*?\]\]/g, '');
+		text = text.replace(/---.*?---/g, '');
+		var blob = new Blob([text], { type: 'text/plain' });
+		const data = [new ClipboardItem({
+			["text/plain"]: blob,
+		})];
+		navigator.clipboard.write(data);
+	}
+
+	expandTemplate(editor: Editor) {
+		let templatesFolder : string;
+		try {
+			templatesFolder = (this.app as any).internalPlugins.plugins["templates"].instance
+				.options.folder;
+		} catch (err) {
+			return
+		}
+
+		const templateName = editor.getSelection();
+
+		const files =  this.app.vault.getFiles().filter((file) =>
+			file.path.startsWith(templatesFolder)
+		)
+
+		const vaultPath = getVaultPath(this.app);
+		if (!vaultPath)
+			return;
+
+		let templatesCollection = files.map(it => { return { templatePath: path.join(vaultPath, it.path), templateName: it.basename } as ITemplate }).filter(it => { return it.templatePath.match(/\.md$/) && it.templateName === templateName });
+
+		if (templatesCollection.length == 0)
+			return;
+
+		const insertTemplate = (template: ITemplate) => {
+			const templateText = getExpandedTemplate(template);
+			editor.replaceSelection(templateText);
+		}
+
+		if (templatesCollection.length == 1) {
+			let template = templatesCollection.first();
+			if (!template)
+				return;
+			insertTemplate(template);
+		}
+		else {
+			const modal = new TemplatesModal(this.app, templatesCollection, insertTemplate);
+			modal.open();
+		}
+	}
+
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
+export class TemplatesModal extends SuggestModal<ITemplate> {
+	suggestions : ITemplate[];
+	callback : Function;
+
+	constructor (app: App, suggestions: ITemplate[], callback: Function) {
 		super(app);
+		this.suggestions = suggestions;
+		this.callback = callback;
+	}
+	getSuggestions(query: string): ITemplate[] {
+	  return this.suggestions.filter((it) =>
+		it.templatePath.toLowerCase().includes(query.toLowerCase())
+	  );
 	}
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
+	renderSuggestion(template: ITemplate, el: HTMLElement) {
+	  el.createEl("div", { text: template.templateName });
+	  el.createEl("small", { text: template.templatePath });
 	}
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+	onChooseSuggestion(template: ITemplate, evt: MouseEvent | KeyboardEvent) {
+		this.callback(template);
 	}
-}
+  }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
-}
