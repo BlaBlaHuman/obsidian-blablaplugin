@@ -6,7 +6,10 @@ export interface PluginSettings {
 	removeEmphasis: boolean;
 	removeTags: boolean;
 	removeComments: boolean;
-	mySetting: string;
+    migrateSettingsFromBuildinTemplates: boolean;
+	templateFolder: string | undefined;
+    dateFormat: string;
+    timeFormat: string;
 }
 
 
@@ -15,9 +18,11 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	removeEmphasis: false,
 	removeTags: false,
 	removeComments: false,
-	mySetting: 'default'
+    migrateSettingsFromBuildinTemplates: true,
+	templateFolder: undefined,
+    dateFormat: "YYYY-MM-DD",
+    timeFormat: "HH:mm"
 }
-
 
 export class BlaBlaSettingTab extends PluginSettingTab {
 	plugin: BlaBlaPlugin;
@@ -32,14 +37,46 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+        new Setting(containerEl)
+			.setName('Migrate settings from buildin `Templates` plugin')
+			.setDesc('If enabled, template folder is taken from buildin `Templates` settings')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.migrateSettingsFromBuildinTemplates)
+				.onChange(async (value) => {
+					this.plugin.settings.migrateSettingsFromBuildinTemplates = value;
+					await this.plugin.saveSettings();
+				}));
+
 		new Setting(containerEl)
 			.setName('Path to templates')
 			.setDesc('Path to your templates folder')
 			.addText(text => text
 				.setPlaceholder('Enter your path')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.templateFolder ?? "")
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.templateFolder = value.trim() == "" ? DEFAULT_SETTINGS.templateFolder : value.trim();
+					await this.plugin.saveSettings();
+				}));
+
+        new Setting(containerEl)
+			.setName('Date format')
+			.setDesc('{{date}} in the template file will be replaced by this value')
+			.addText(text => text
+				.setPlaceholder('YYYY-MM-DD')
+				.setValue(this.plugin.settings.dateFormat)
+				.onChange(async (value) => {
+					this.plugin.settings.dateFormat = value == "" ? DEFAULT_SETTINGS.dateFormat : value;
+					await this.plugin.saveSettings();
+				}));
+
+        new Setting(containerEl)
+			.setName('Time format')
+			.setDesc('{{time}} in the template file will be replaced by this value')
+			.addText(text => text
+				.setPlaceholder('HH:mm')
+				.setValue(this.plugin.settings.timeFormat)
+				.onChange(async (value) => {
+					this.plugin.settings.timeFormat = value == "" ? DEFAULT_SETTINGS.timeFormat : value;
 					await this.plugin.saveSettings();
 				}));
 

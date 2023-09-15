@@ -1,14 +1,9 @@
-import { App, Editor, SuggestModal, Plugin } from 'obsidian';
+import { App, Editor, SuggestModal, Plugin, Notice } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { getVaultPath } from 'src/Utils';
 import { getExpandedTemplate } from 'src/Utils';
 import * as path from "path"
-
-interface ITemplateSettings {
-	templateFolder?: string;
-	dateFormat?: string;
-	timeFormat?: string;
-}
+import { migrateTemplatesFolder } from 'src/MigrateSettings';
 
 export interface ITemplate {
 	templatePath: string;
@@ -105,18 +100,32 @@ export default class BlaBlaPlugin extends Plugin {
 	}
 
 	expandTemplate(editor: Editor) {
-		let templatesFolder : string;
-		try {
-			templatesFolder = (this.app as any).internalPlugins.plugins["templates"].instance
-				.options.folder;
-		} catch (err) {
-			return
+		let templateFolderPath : string;
+
+		if (this.settings.migrateSettingsFromBuildinTemplates) {
+			let internalTemplateFolder = migrateTemplatesFolder(this);
+			if (internalTemplateFolder == undefined) {
+				new Notice("Builtin plugin `Templates` is not available")
+				return;
+			}
+
+			templateFolderPath = internalTemplateFolder;
+		}
+
+		else {
+			let localTemplateFolder = this.settings.templateFolder;
+			if (localTemplateFolder == undefined) {
+				new Notice("Templates folder is not specified")
+				return;
+			}
+
+			templateFolderPath = localTemplateFolder;
 		}
 
 		const templateName = editor.getSelection();
 
-		const files =  this.app.vault.getFiles().filter((file) =>
-			file.path.startsWith(templatesFolder)
+		const files = this.app.vault.getFiles().filter((file) =>
+			file.path.startsWith(templateFolderPath)
 		)
 
 		const vaultPath = getVaultPath(this.app);
@@ -125,11 +134,13 @@ export default class BlaBlaPlugin extends Plugin {
 
 		let templatesCollection = files.map(it => { return { templatePath: path.join(vaultPath, it.path), templateName: it.basename } as ITemplate }).filter(it => { return it.templatePath.match(/\.md$/) && it.templateName === templateName });
 
-		if (templatesCollection.length == 0)
+		if (!templatesCollection.length) {
+			new Notice(`Template ${templateName} was not found`)
 			return;
+		}
 
 		const insertTemplate = (template: ITemplate) => {
-			const templateText = getExpandedTemplate(template);
+			const templateText = getExpandedTemplate(template, this);
 			editor.replaceSelection(templateText);
 		}
 
