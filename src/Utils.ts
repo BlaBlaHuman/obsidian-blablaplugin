@@ -1,4 +1,4 @@
-import { App, FileSystemAdapter, Plugin } from "obsidian"
+import { App, FileSystemAdapter, Plugin, TFile} from "obsidian"
 import * as fs from 'fs';
 import BlaBlaPlugin, { ITemplate } from '../main'
 
@@ -10,9 +10,9 @@ export function getVaultPath(app: App) {
 	return null;
 }
 
-export function getExpandedTemplate(template: ITemplate, plugin: BlaBlaPlugin) {
+export async function getExpandedTemplate(template: TFile, plugin: BlaBlaPlugin) {
     const moment = (<any>window).moment;
-    const text = fs.readFileSync(template.templatePath, "utf-8")
+    const text = (await plugin.app.vault.read(template))
 				.replace(/{{date}}/gi, moment().format(plugin.settings.dateFormat))
 				.replace(/{{date\s*\+\s*(\d+)}}/gi, (match, number) => {
 					const daysToAdd = parseInt(number, 10);
@@ -23,6 +23,6 @@ export function getExpandedTemplate(template: ITemplate, plugin: BlaBlaPlugin) {
 					const newDate = moment().add(-daysToAdd, "days").format(plugin.settings.dateFormat);
 					return newDate;})
 				.replace(/{{time}}/gi, moment().format(plugin.settings.timeFormat))
-				.replace(/{{title}}/gi, template.templateName);
+				.replace(/{{title}}/gi, template.basename);
     return text;
 }

@@ -1,9 +1,10 @@
-import { App, Editor, SuggestModal, Plugin, Notice } from 'obsidian';
+import { App, Editor, SuggestModal, Plugin, Notice, TFile } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { getVaultPath } from 'src/Utils';
 import { getExpandedTemplate } from 'src/Utils';
 import * as path from "path"
-import { migrateTemplatesFolder } from 'src/MigrateSettings';
+import { migrateTemplatesFolder, IDailyNotesSettings, migrateDailyNotesSettings } from 'src/MigrateSettings';
+import * as fs from 'fs';
 
 export interface ITemplate {
 	templatePath: string;
@@ -27,14 +28,30 @@ export default class BlaBlaPlugin extends Plugin {
 			id: 'copy-plain-markdown',
 			name: 'Copy plain markdown',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
-			editorCallback: (editor: any) => this.copyPlainMarkdown(editor)
+			callback: () => this.copyPlainMarkdown()
 		});
 
 		this.addCommand({
 			id: 'copy-structural-formatting',
 			name: 'Copy structural formatting only',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "x" }],
-			editorCallback: (editor: any) => this.copyStructuralFormatting(editor)
+			callback: () => this.copyStructuralFormatting()
+		});
+
+		this.addCommand({
+			id: 'open-tomorrow-note',
+			name: 'Open tomorrow note',
+			callback: () => {
+				this.openOrCreateNote(1)
+			}
+		});
+
+		this.addCommand({
+			id: 'open-yesterday-note',
+			name: 'Open yesterday note',
+			callback: () => {
+				this.openOrCreateNote(-1)
+			}
 		});
 
 		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
@@ -52,7 +69,40 @@ export default class BlaBlaPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async copyPlainMarkdown(editor: Editor) {
+	async openOrCreateNote(daysShift: number) {
+		const dailyNotesSettings = migrateDailyNotesSettings(this);
+		const moment = (<any>window).moment;
+
+		if (!dailyNotesSettings) {
+			new Notice("`Daily notes` plugin is not available")
+			return;
+		}
+
+		const vaultPath = getVaultPath(this.app);
+		if (!vaultPath)
+			return;
+
+		let dailyNotesFolder = this.app.vault.getAbstractFileByPath(dailyNotesSettings.newFileLocation);
+		if (!dailyNotesFolder) {
+			dailyNotesFolder = await this.app.vault.createFolder(dailyNotesSettings.newFileLocation);
+		}
+
+		const noteName = moment().add(daysShift, "days").format(dailyNotesSettings.dateFormat);
+		const notePath = path.join(dailyNotesSettings.newFileLocation, noteName + ".md");
+		let file: TFile | null = this.app.vault.getAbstractFileByPath(notePath) as TFile;
+
+		if (!file) {
+			const templateFile = this.app.vault.getAbstractFileByPath(dailyNotesSettings.templateFileLocation + ".md") as TFile;
+			if (!templateFile)
+				return;
+			const templateText = await getExpandedTemplate(templateFile, this);
+			file = await this.app.vault.create(notePath, templateText);
+		}
+
+		await this.app.workspace.openLinkText(file.path, '', true, { active: true });
+	}
+
+	async copyPlainMarkdown() {
 		const noteFile = this.app.workspace.getActiveFile();
 		if (!noteFile?.name) return;
 
@@ -85,7 +135,7 @@ export default class BlaBlaPlugin extends Plugin {
 		navigator.clipboard.write(data);
 	}
 
-	async copyStructuralFormatting(editor: Editor) {
+	async copyStructuralFormatting() {
 		const noteFile = this.app.workspace.getActiveFile();
 		if (!noteFile?.name) return;
 
@@ -100,7 +150,7 @@ export default class BlaBlaPlugin extends Plugin {
 	}
 
 	expandTemplate(editor: Editor) {
-		let templateFolderPath : string;
+		let templateFolderPath: string;
 
 		if (this.settings.migrateSettingsFromBuildinTemplates) {
 			let internalTemplateFolder = migrateTemplatesFolder(this);
@@ -124,7 +174,7 @@ export default class BlaBlaPlugin extends Plugin {
 
 		const templateName = editor.getSelection();
 
-		const files = this.app.vault.getFiles().filter((file) =>
+		const files = this.app.vault.getMarkdownFiles().filter((file) =>
 			file.path.startsWith(templateFolderPath)
 		)
 
@@ -132,15 +182,15 @@ export default class BlaBlaPlugin extends Plugin {
 		if (!vaultPath)
 			return;
 
-		let templatesCollection = files.map(it => { return { templatePath: path.join(vaultPath, it.path), templateName: it.basename } as ITemplate }).filter(it => { return it.templatePath.match(/\.md$/) && it.templateName === templateName });
+		let templatesCollection = files.filter(it => it.basename === templateName);
 
 		if (!templatesCollection.length) {
 			new Notice(`Template ${templateName} was not found`)
 			return;
 		}
 
-		const insertTemplate = (template: ITemplate) => {
-			const templateText = getExpandedTemplate(template, this);
+		const insertTemplate = async (template: TFile) => {
+			const templateText = await getExpandedTemplate(template, this);
 			editor.replaceSelection(templateText);
 		}
 
@@ -158,28 +208,30 @@ export default class BlaBlaPlugin extends Plugin {
 
 }
 
-export class TemplatesModal extends SuggestModal<ITemplate> {
-	suggestions : ITemplate[];
-	callback : Function;
 
-	constructor (app: App, suggestions: ITemplate[], callback: Function) {
+
+export class TemplatesModal extends SuggestModal<TFile> {
+	suggestions: TFile[];
+	callback: Function;
+
+	constructor(app: App, suggestions: TFile[], callback: Function) {
 		super(app);
 		this.suggestions = suggestions;
 		this.callback = callback;
 	}
-	getSuggestions(query: string): ITemplate[] {
-	  return this.suggestions.filter((it) =>
-		it.templatePath.toLowerCase().includes(query.toLowerCase())
-	  );
+	getSuggestions(query: string): TFile[] {
+		return this.suggestions.filter((it) =>
+			it.path.toLowerCase().includes(query.toLowerCase())
+		);
 	}
 
-	renderSuggestion(template: ITemplate, el: HTMLElement) {
-	  el.createEl("div", { text: template.templateName });
-	  el.createEl("small", { text: template.templatePath });
+	renderSuggestion(template: TFile, el: HTMLElement) {
+		el.createEl("div", { text: template.basename });
+		el.createEl("small", { text: template.path });
 	}
 
-	onChooseSuggestion(template: ITemplate, evt: MouseEvent | KeyboardEvent) {
+	onChooseSuggestion(template: TFile, evt: MouseEvent | KeyboardEvent) {
 		this.callback(template);
 	}
-  }
+}
 
