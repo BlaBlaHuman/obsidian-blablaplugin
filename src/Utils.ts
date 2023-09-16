@@ -1,5 +1,5 @@
-import { App, FileSystemAdapter, Plugin, TFile} from "obsidian"
-import BlaBlaPlugin, { ITemplate } from '../main'
+import { TFile} from "obsidian"
+import BlaBlaPlugin from '../main'
 
 
 export async function getExpandedTemplate(template: TFile, plugin: BlaBlaPlugin) {

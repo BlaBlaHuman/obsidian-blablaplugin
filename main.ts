@@ -2,7 +2,7 @@ import { App, Editor, SuggestModal, Plugin, Notice, TFile, Command,  } from 'obs
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { getExpandedTemplate } from 'src/Utils';
 import * as path from "path"
-import { migrateTemplatesFolder, IDailyNotesSettings, migrateDailyNotesSettings } from 'src/MigrateSettings';
+import { migrateTemplatesFolder, migrateDailyNotesSettings } from 'src/MigrateSettings';
 
 export interface ITemplate {
 	templatePath: string;
@@ -44,7 +44,7 @@ export default class BlaBlaPlugin extends Plugin {
 
 		const openTomorrowNoteCommand = this.addCommand({
 			id: 'open-note-tomorrow',
-			name: 'Open tomorrow note',
+			name: 'Open tomorrow`s note',
 			callback: () => {
 				this.openOrCreateNote(1)
 			}
@@ -53,7 +53,7 @@ export default class BlaBlaPlugin extends Plugin {
 
 		const openYesterdayNoteCommand = this.addCommand({
 			id: 'open-note-yesterday',
-			name: 'Open yesterday note',
+			name: 'Open yesterday`s note',
 			callback: () => {
 				this.openOrCreateNote(-1)
 			}
@@ -62,7 +62,7 @@ export default class BlaBlaPlugin extends Plugin {
 
 		const openTodayNoteCommand = this.addCommand({
 			id: 'open-note-today',
-			name: 'Open today note',
+			name: 'Open today`s note',
 			callback: () => {
 				this.openOrCreateNote()
 			}
