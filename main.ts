@@ -1,10 +1,8 @@
 import { App, Editor, SuggestModal, Plugin, Notice, TFile, Command,  } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
-import { getVaultPath } from 'src/Utils';
 import { getExpandedTemplate } from 'src/Utils';
 import * as path from "path"
 import { migrateTemplatesFolder, IDailyNotesSettings, migrateDailyNotesSettings } from 'src/MigrateSettings';
-import * as fs from 'fs';
 
 export interface ITemplate {
 	templatePath: string;
@@ -103,10 +101,6 @@ export default class BlaBlaPlugin extends Plugin {
 			return;
 		}
 
-		const vaultPath = getVaultPath(this.app);
-		if (!vaultPath)
-			return;
-
 		let dailyNotesFolder = this.app.vault.getAbstractFileByPath(dailyNotesSettings.newFileLocation);
 		if (!dailyNotesFolder) {
 			dailyNotesFolder = await this.app.vault.createFolder(dailyNotesSettings.newFileLocation);
@@ -197,26 +191,29 @@ export default class BlaBlaPlugin extends Plugin {
 			templateFolderPath = localTemplateFolder;
 		}
 
-		const templateName = editor.getSelection();
+		const templateName = editor.getSelection().trim();
 
 		const files = this.app.vault.getMarkdownFiles().filter((file) =>
 			file.path.startsWith(templateFolderPath)
 		)
 
-		const vaultPath = getVaultPath(this.app);
-		if (!vaultPath)
+		const insertTemplate = async (template: TFile) => {
+			const templateText = await getExpandedTemplate(template, this);
+			editor.replaceSelection(templateText);
+		}
+
+		if (templateName == "") {
+			const modal = new TemplatesModal(this.app, files, insertTemplate);
+			modal.open();
 			return;
+		}
 
 		let templatesCollection = files.filter(it => it.basename === templateName);
+
 
 		if (!templatesCollection.length) {
 			new Notice(`Template ${templateName} was not found`)
 			return;
-		}
-
-		const insertTemplate = async (template: TFile) => {
-			const templateText = await getExpandedTemplate(template, this);
-			editor.replaceSelection(templateText);
 		}
 
 		if (templatesCollection.length == 1) {

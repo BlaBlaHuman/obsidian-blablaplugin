@@ -1,14 +1,6 @@
 import { App, FileSystemAdapter, Plugin, TFile} from "obsidian"
-import * as fs from 'fs';
 import BlaBlaPlugin, { ITemplate } from '../main'
 
-export function getVaultPath(app: App) {
-	let adapter = app.vault.adapter;
-	if (adapter instanceof FileSystemAdapter) {
-		return adapter.getBasePath();
-	}
-	return null;
-}
 
 export async function getExpandedTemplate(template: TFile, plugin: BlaBlaPlugin) {
     const moment = (<any>window).moment;
