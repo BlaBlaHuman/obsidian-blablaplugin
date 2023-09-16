@@ -74,7 +74,7 @@ export default class BlaBlaPlugin extends Plugin {
 
 		this.addRibbonIcon("calendar", "Open daily note", () => {
 			const modal = new DailyNotesSuggestModal(this.app, this.commands.filter(it => {
-				return it.id.startsWith(this.manifest.id + ":" + "open-note")
+				return it.id.startsWith(`${this.manifest.id}:open-note`)
 			}))
 			modal.open()
 		});
@@ -113,11 +113,11 @@ export default class BlaBlaPlugin extends Plugin {
 		}
 
 		const noteName = moment().add(daysShift, "days").format(dailyNotesSettings.dateFormat);
-		const notePath = path.join(dailyNotesSettings.newFileLocation, noteName + ".md");
+		const notePath = path.join(dailyNotesSettings.newFileLocation, `${noteName}.md`);
 		let file: TFile | null = this.app.vault.getAbstractFileByPath(notePath) as TFile;
 
 		if (!file) {
-			const templateFile = this.app.vault.getAbstractFileByPath(dailyNotesSettings.templateFileLocation + ".md") as TFile;
+			const templateFile = this.app.vault.getAbstractFileByPath(`${dailyNotesSettings.templateFileLocation}.md`) as TFile;
 			if (!templateFile)
 				return;
 			const templateText = await getExpandedTemplate(templateFile, this);
