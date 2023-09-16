@@ -1,4 +1,4 @@
-import { App, Editor, SuggestModal, Plugin, Notice, TFile } from 'obsidian';
+import { App, Editor, SuggestModal, Plugin, Notice, TFile, Command,  } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { getVaultPath } from 'src/Utils';
 import { getExpandedTemplate } from 'src/Utils';
@@ -13,45 +13,70 @@ export interface ITemplate {
 
 export default class BlaBlaPlugin extends Plugin {
 	settings: PluginSettings;
+	commands: Command[] = [];
 
 	async onload() {
 		await this.loadSettings();
 
-		this.addCommand({
+		const expandTemplateCommand = this.addCommand({
 			id: 'expand-template',
 			name: 'Expand template',
 			hotkeys: [{ modifiers: ["Mod"], key: "y" }],
 			editorCallback: (editor: any) => this.expandTemplate(editor)
 		});
+		this.commands.push(expandTemplateCommand);
 
-		this.addCommand({
+		const copyPlaiMarkdownCommand = this.addCommand({
 			id: 'copy-plain-markdown',
 			name: 'Copy plain markdown',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
 			callback: () => this.copyPlainMarkdown()
 		});
+		this.commands.push(copyPlaiMarkdownCommand)
 
-		this.addCommand({
+
+		const copyStructuralFormattingCommand = this.addCommand({
 			id: 'copy-structural-formatting',
 			name: 'Copy structural formatting only',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "x" }],
 			callback: () => this.copyStructuralFormatting()
 		});
+		this.commands.push(copyStructuralFormattingCommand)
 
-		this.addCommand({
-			id: 'open-tomorrow-note',
+
+		const openTomorrowNoteCommand = this.addCommand({
+			id: 'open-note-tomorrow',
 			name: 'Open tomorrow note',
 			callback: () => {
 				this.openOrCreateNote(1)
 			}
 		});
+		this.commands.push(openTomorrowNoteCommand)
 
-		this.addCommand({
-			id: 'open-yesterday-note',
+		const openYesterdayNoteCommand = this.addCommand({
+			id: 'open-note-yesterday',
 			name: 'Open yesterday note',
 			callback: () => {
 				this.openOrCreateNote(-1)
 			}
+		});
+		this.commands.push(openYesterdayNoteCommand)
+
+		const openTodayNoteCommand = this.addCommand({
+			id: 'open-note-today',
+			name: 'Open today note',
+			callback: () => {
+				this.openOrCreateNote()
+			}
+		});
+		this.commands.push(openTodayNoteCommand)
+
+
+		this.addRibbonIcon("calendar", "Open daily note", () => {
+			const modal = new DailyNotesSuggestModal(this.app, this.commands.filter(it => {
+				return it.id.startsWith(this.manifest.id + ":" + "open-note")
+			}))
+			modal.open()
 		});
 
 		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
@@ -69,7 +94,7 @@ export default class BlaBlaPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async openOrCreateNote(daysShift: number) {
+	async openOrCreateNote(daysShift: number = 0) {
 		const dailyNotesSettings = migrateDailyNotesSettings(this);
 		const moment = (<any>window).moment;
 
@@ -235,3 +260,26 @@ export class TemplatesModal extends SuggestModal<TFile> {
 	}
 }
 
+
+export class DailyNotesSuggestModal extends SuggestModal<Command> {
+	commands: Command[];
+
+	constructor(app: App, commands: Command[]) {
+		super(app);
+		this.commands = commands;
+	}
+	getSuggestions(query: string): Command[] {
+		return this.commands.filter((it) =>
+			it.name.toLowerCase().includes(query.toLowerCase())
+		);
+	}
+
+	renderSuggestion(command: Command, el: HTMLElement) {
+		el.createEl("div", { text: command.name });
+	}
+
+	onChooseSuggestion(command: Command, evt: MouseEvent | KeyboardEvent) {
+		command.callback ? command.callback() : console.error("Daily notes callback was not found");
+
+	}
+}
