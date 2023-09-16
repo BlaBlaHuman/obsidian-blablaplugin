@@ -28,7 +28,7 @@ export default class BlaBlaPlugin extends Plugin {
 			id: 'copy-plain-markdown',
 			name: 'Copy plain markdown',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
-			callback: () => this.copyPlainMarkdown()
+			editorCallback: (editor: any) => this.copyPlainMarkdown(editor)
 		});
 		this.commands.push(copyPlaiMarkdownCommand)
 
@@ -37,7 +37,7 @@ export default class BlaBlaPlugin extends Plugin {
 			id: 'copy-structural-formatting',
 			name: 'Copy structural formatting only',
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "x" }],
-			callback: () => this.copyStructuralFormatting()
+			editorCallback: (editor: any) => this.copyStructuralFormatting(editor)
 		});
 		this.commands.push(copyStructuralFormattingCommand)
 
@@ -121,7 +121,7 @@ export default class BlaBlaPlugin extends Plugin {
 		await this.app.workspace.openLinkText(file.path, '', true, { active: true });
 	}
 
-	async copyPlainMarkdown() {
+	async copyPlainMarkdown(editor: Editor) {
 		const noteFile = this.app.workspace.getActiveFile();
 		if (!noteFile?.name) return;
 
@@ -154,14 +154,16 @@ export default class BlaBlaPlugin extends Plugin {
 		navigator.clipboard.write(data);
 	}
 
-	async copyStructuralFormatting() {
-		const noteFile = this.app.workspace.getActiveFile();
-		if (!noteFile?.name) return;
+	async copyStructuralFormatting(editor: Editor) {
+		let textToCopy = editor.getSelection()
+		if (textToCopy == "") {
+			const noteFile = this.app.workspace.getActiveFile();
+			if (!noteFile?.name) return;
+			textToCopy = await this.app.vault.read(noteFile);
+		}
 
-		let text = await this.app.vault.read(noteFile);
-		text = text.replace(/\[\[.*?\]\]/g, '');
-		text = text.replace(/---.*?---/g, '');
-		var blob = new Blob([text], { type: 'text/plain' });
+		textToCopy = textToCopy.replace(/<(.|\n)*?>/g, '');
+		var blob = new Blob([textToCopy], { type: 'text/plain' });
 		const data = [new ClipboardItem({
 			["text/plain"]: blob,
 		})];
