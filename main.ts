@@ -1,4 +1,4 @@
-import { App, Editor, SuggestModal, Plugin, Notice, TFile, Command,  } from 'obsidian';
+import { App, Editor, SuggestModal, Plugin, Notice, TFile, Command, MarkdownView, } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { getExpandedTemplate } from 'src/Utils';
 import * as path from "path"
@@ -77,6 +77,38 @@ export default class BlaBlaPlugin extends Plugin {
 			modal.open()
 		});
 
+
+		const removeTODOsCallback = async () => {
+			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (!activeView)
+				return;
+			const editor = activeView.editor;
+			const noteFile = this.app.workspace.getActiveFile();
+			if (!noteFile) return;
+			let text = await this.app.vault.read(noteFile);
+			let found = false;
+			text = text.replace(/\-\s\[\x\]\s([^\n]+)/g, (_match, _cap) => {
+				found = true;
+				return '';
+			});
+			if (!found)
+				return;
+
+			editor.setValue(text);
+		}
+		const removeTODOsTimeout = 2000;
+		let inputTimeout: NodeJS.Timeout;
+		if (this.settings.deleteTODOs)
+			inputTimeout = setTimeout(removeTODOsCallback, removeTODOsTimeout);
+		this.registerEvent(this.app.workspace.on('editor-change', (_editor, _info) => {
+			if (!this.settings.deleteTODOs)
+				return;
+			clearTimeout(inputTimeout);
+			inputTimeout = setTimeout(removeTODOsCallback, removeTODOsTimeout);
+		}))
+
+
+
 		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
 	}
 
@@ -125,7 +157,7 @@ export default class BlaBlaPlugin extends Plugin {
 		let text = editor.getSelection()
 		if (text == "") {
 			const noteFile = this.app.workspace.getActiveFile();
-			if (!noteFile?.name) return;
+			if (!noteFile) return;
 			text = await this.app.vault.read(noteFile);
 		}
 
@@ -160,7 +192,7 @@ export default class BlaBlaPlugin extends Plugin {
 		let textToCopy = editor.getSelection()
 		if (textToCopy == "") {
 			const noteFile = this.app.workspace.getActiveFile();
-			if (!noteFile?.name) return;
+			if (!noteFile) return;
 			textToCopy = await this.app.vault.read(noteFile);
 		}
 

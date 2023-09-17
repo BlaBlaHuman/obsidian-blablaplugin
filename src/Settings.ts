@@ -10,6 +10,7 @@ export interface PluginSettings {
 	templateFolder: string | undefined;
     dateFormat: string;
     timeFormat: string;
+    deleteTODOs: boolean;
 }
 
 
@@ -21,7 +22,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     migrateSettingsFromBuildinTemplates: true,
 	templateFolder: undefined,
     dateFormat: "YYYY-MM-DD",
-    timeFormat: "HH:mm"
+    timeFormat: "HH:mm",
+    deleteTODOs: false
 }
 
 export class BlaBlaSettingTab extends PluginSettingTab {
@@ -122,5 +124,16 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 					this.plugin.settings.removeComments = value;
 					await this.plugin.saveSettings();
 				}));
+
+        this.containerEl.createEl("h1", { text: "TODO lists" });
+        new Setting(containerEl)
+            .setName("Remove completed TODOs")
+            .setDesc("If enabled, removes completed TODOs")
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.deleteTODOs)
+                .onChange(async (value) => {
+                    this.plugin.settings.deleteTODOs = value;
+                    await this.plugin.saveSettings();
+                }));
 	}
 }
