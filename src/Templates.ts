@@ -28,28 +28,32 @@ export class TemplatesSuggestModal extends SuggestModal<TFile> {
 	}
 }
 
-export function expandTemplate(plugin: BlaBlaPlugin, editor: Editor) {
-    let templateFolderPath: string;
-
+function getTemplatesFolder(plugin: BlaBlaPlugin) {
     if (plugin.settings.migrateSettingsFromBuildinTemplates) {
         let internalTemplateFolder = migrateTemplatesFolder(plugin);
         if (internalTemplateFolder == undefined) {
             new Notice("Builtin plugin `Templates` is not available")
-            return;
+            return null;
         }
 
-        templateFolderPath = internalTemplateFolder;
+        return internalTemplateFolder;
     }
 
     else {
         let localTemplateFolder = plugin.settings.templateFolder;
         if (localTemplateFolder == undefined) {
             new Notice("Templates folder is not specified")
-            return;
+            return null;
         }
 
-        templateFolderPath = localTemplateFolder;
+        return localTemplateFolder;
     }
+}
+
+export function expandTemplate(plugin: BlaBlaPlugin, editor: Editor) {
+    const templateFolderPath = getTemplatesFolder(plugin);
+    if (!templateFolderPath)
+        return;
 
     const templateName = editor.getSelection().trim();
 

@@ -1,4 +1,4 @@
-import { Editor, Plugin, Command, MarkdownView, } from 'obsidian';
+import { Editor, Plugin, MarkdownView, } from 'obsidian';
 import { BlaBlaSettingTab, PluginSettings, DEFAULT_SETTINGS } from "src/Settings"
 import { DailyNotesSuggestModal, openOrCreateNote } from 'src/DailyNotes';
 import { expandTemplate } from 'src/Templates';
@@ -6,7 +6,6 @@ import { copyPlainMarkdown, copyStructuralFormatting } from 'src/CopyPasteImprov
 
 export default class BlaBlaPlugin extends Plugin {
 	settings: PluginSettings;
-	commands: Command[] = [];
 
 	async onload() {
 		await this.loadSettings();
@@ -16,14 +15,12 @@ export default class BlaBlaPlugin extends Plugin {
 			name: 'Expand template',
 			editorCallback: (editor: any) => expandTemplate(this, editor)
 		});
-		this.commands.push(expandTemplateCommand);
 
 		const copyPlaiMarkdownCommand = this.addCommand({
 			id: 'copy-plain-markdown',
 			name: 'Copy plain markdown',
 			editorCallback: (editor: any) => copyPlainMarkdown(this, editor)
 		});
-		this.commands.push(copyPlaiMarkdownCommand)
 
 
 		const copyStructuralFormattingCommand = this.addCommand({
@@ -31,7 +28,6 @@ export default class BlaBlaPlugin extends Plugin {
 			name: 'Copy structural formatting only',
 			editorCallback: (editor: any) => copyStructuralFormatting(editor)
 		});
-		this.commands.push(copyStructuralFormattingCommand)
 
 
 		const openTomorrowNoteCommand = this.addCommand({
@@ -41,7 +37,6 @@ export default class BlaBlaPlugin extends Plugin {
 				openOrCreateNote(this, 1)
 			}
 		});
-		this.commands.push(openTomorrowNoteCommand)
 
 		const openYesterdayNoteCommand = this.addCommand({
 			id: 'open-note-yesterday',
@@ -50,7 +45,6 @@ export default class BlaBlaPlugin extends Plugin {
 				openOrCreateNote(this, -1)
 			}
 		});
-		this.commands.push(openYesterdayNoteCommand)
 
 		const openTodayNoteCommand = this.addCommand({
 			id: 'open-note-today',
@@ -59,13 +53,10 @@ export default class BlaBlaPlugin extends Plugin {
 				openOrCreateNote(this)
 			}
 		});
-		this.commands.push(openTodayNoteCommand)
 
 
 		this.addRibbonIcon("calendar", "Open daily note", () => {
-			const modal = new DailyNotesSuggestModal(this.app, this.commands.filter(it => {
-				return it.id.startsWith(`${this.manifest.id}:open-note`)
-			}))
+			const modal = new DailyNotesSuggestModal(this.app, [openTodayNoteCommand, openYesterdayNoteCommand, openTomorrowNoteCommand]);
 			modal.open()
 		});
 
@@ -124,7 +115,6 @@ export default class BlaBlaPlugin extends Plugin {
 				editor.setValue(text);
 			}
 		});
-		this.commands.push(removeEmptyLines)
 
 
 		this.addSettingTab(new BlaBlaSettingTab(this));

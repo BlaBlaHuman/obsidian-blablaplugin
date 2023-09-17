@@ -38,12 +38,13 @@ export async function openOrCreateNote(plugin: BlaBlaPlugin, daysShift: number =
 
     let dailyNotesFolder = plugin.app.vault.getAbstractFileByPath(dailyNotesSettings.newFileLocation);
     if (!dailyNotesFolder) {
+        new Notice("Daily notes folder was created")
         dailyNotesFolder = await plugin.app.vault.createFolder(dailyNotesSettings.newFileLocation);
     }
 
     const noteName = moment().add(daysShift, "days").format(dailyNotesSettings.dateFormat);
     const notePath = path.join(dailyNotesSettings.newFileLocation, `${noteName}.md`);
-    let file: TFile | null = plugin.app.vault.getAbstractFileByPath(notePath) as TFile;
+    let file = plugin.app.vault.getAbstractFileByPath(notePath) as TFile;
 
     if (!file) {
         const templateFile = plugin.app.vault.getAbstractFileByPath(`${dailyNotesSettings.templateFileLocation}.md`) as TFile;
@@ -53,5 +54,5 @@ export async function openOrCreateNote(plugin: BlaBlaPlugin, daysShift: number =
         file = await plugin.app.vault.create(notePath, templateText);
     }
 
-    await plugin.app.workspace.openLinkText(file?.path, '', true, { active: true });
+    await plugin.app.workspace.openLinkText(file.path, '', true, { active: true });
 }
