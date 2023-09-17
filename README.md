@@ -20,7 +20,7 @@
 
   ### Daily notes enhancements
   * You can now open your daily notes for yesterday/today/tomorrow with dedicated actions! Also, there is a new ribbon icon with all these actions.
-  * "Wow, I don't see any settings regarding daily notes, where are they?". Date format, daily notes location and template location are all synced with *Daily notes* plugin itself, so you don't have to set it up yourself!
+  * "Wow, I don't see any settings regarding daily notes, where are they?". Date format, daily notes location and template location are all synced with *Daily notes* plugin, so you don't have to set it up yourself!
 
   ### TODO lists
   * You can toggle on automatic completed TODO items removal. If turned on, all the checked TODOs will disappear within 2 seconds after the last edit.
