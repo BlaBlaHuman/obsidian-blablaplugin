@@ -19,7 +19,6 @@ export default class BlaBlaPlugin extends Plugin {
 		const expandTemplateCommand = this.addCommand({
 			id: 'expand-template',
 			name: 'Expand template',
-			hotkeys: [{ modifiers: ["Mod"], key: "y" }],
 			editorCallback: (editor: any) => this.expandTemplate(editor)
 		});
 		this.commands.push(expandTemplateCommand);
@@ -27,7 +26,6 @@ export default class BlaBlaPlugin extends Plugin {
 		const copyPlaiMarkdownCommand = this.addCommand({
 			id: 'copy-plain-markdown',
 			name: 'Copy plain markdown',
-			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "c" }],
 			editorCallback: (editor: any) => this.copyPlainMarkdown(editor)
 		});
 		this.commands.push(copyPlaiMarkdownCommand)
@@ -36,7 +34,6 @@ export default class BlaBlaPlugin extends Plugin {
 		const copyStructuralFormattingCommand = this.addCommand({
 			id: 'copy-structural-formatting',
 			name: 'Copy structural formatting only',
-			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "x" }],
 			editorCallback: (editor: any) => this.copyStructuralFormatting(editor)
 		});
 		this.commands.push(copyStructuralFormattingCommand)
