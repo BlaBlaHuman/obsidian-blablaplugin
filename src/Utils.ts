@@ -1,9 +1,9 @@
-import { TFile} from "obsidian"
+import { TFile } from "obsidian"
 import BlaBlaPlugin from '../main'
 
 
-export async function getExpandedTemplate(template: TFile, plugin: BlaBlaPlugin) {
-    const moment = (<any>window).moment;
+export async function getExpandedTemplate(template: TFile, plugin: BlaBlaPlugin) : Promise<string> {
+    const moment = window.moment;
     const text = (await plugin.app.vault.read(template))
 				.replace(/{{date}}/gi, moment().format(plugin.settings.dateFormat))
                 .replace(/{{date\s*\:\s*(.+)}}/gi, (match, format) => {

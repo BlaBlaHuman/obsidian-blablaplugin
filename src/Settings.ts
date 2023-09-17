@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian"
+import { PluginSettingTab, Setting } from "obsidian"
 import BlaBlaPlugin from "../main"
 
 export interface PluginSettings {
@@ -29,8 +29,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 export class BlaBlaSettingTab extends PluginSettingTab {
 	plugin: BlaBlaPlugin;
 
-	constructor(app: App, plugin: BlaBlaPlugin) {
-		super(app, plugin);
+	constructor(plugin: BlaBlaPlugin) {
+		super(plugin.app, plugin);
 		this.plugin = plugin;
 	}
 
@@ -57,7 +57,8 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 				.setPlaceholder('Enter your path')
 				.setValue(this.plugin.settings.templateFolder ?? "")
 				.onChange(async (value) => {
-					this.plugin.settings.templateFolder = value.trim() == "" ? DEFAULT_SETTINGS.templateFolder : value.trim();
+                    const trimmedValue = value.trim()
+					this.plugin.settings.templateFolder = trimmedValue == "" ? DEFAULT_SETTINGS.templateFolder : trimmedValue;
 					await this.plugin.saveSettings();
 				}));
 
@@ -126,6 +127,7 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 				}));
 
         this.containerEl.createEl("h1", { text: "TODO lists" });
+
         new Setting(containerEl)
             .setName("Remove completed TODOs")
             .setDesc("If enabled, removes completed TODOs")
