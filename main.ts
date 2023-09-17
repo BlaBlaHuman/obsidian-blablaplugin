@@ -122,21 +122,23 @@ export default class BlaBlaPlugin extends Plugin {
 	}
 
 	async copyPlainMarkdown(editor: Editor) {
-		const noteFile = this.app.workspace.getActiveFile();
-		if (!noteFile?.name) return;
+		let text = editor.getSelection()
+		if (text == "") {
+			const noteFile = this.app.workspace.getActiveFile();
+			if (!noteFile?.name) return;
+			text = await this.app.vault.read(noteFile);
+		}
 
-		let text = await this.app.vault.read(noteFile);
-		text = text.replace(/\[\[.*?\]\]/g, '');
-		text = text.replace(/---.*?---/g, '');
+		text = text.replace(/---.*?---/g, ''); // Removes aliases
+		text = text.replace(/<(.|\n)*?>/g, ''); // Removes tag formatting
+		text = text.replace(/\[\^\w+\]/g, '');
 
-		text = text.replace(/==/g, '');
-		text = text.replace(/\^\w+/g, '');
 		if (this.settings.removeBrackets) {
 			text = text.replace(/\[\[(.*?)\]\]/g, '$1');
 		}
 
 		if (this.settings.removeEmphasis) {
-			text = text.replace(/[*~]+(\w+)[*~]+/g, '$1');
+			text = text.replace(/==/g, ''); // Removes highlights
 		}
 
 		if (this.settings.removeTags) {

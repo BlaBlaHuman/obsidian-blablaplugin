@@ -95,7 +95,7 @@ export class BlaBlaSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Remove text emphasis")
-			.setDesc("If enabled, removes text styling such as bold, italics, and highlights.")
+			.setDesc("If enabled, removes highlights.")
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.removeEmphasis)
 				.onChange(async (value) => {
