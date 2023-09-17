@@ -6,6 +6,7 @@
 
   1. Create a new dedicated vault (please, do not test it on your private vault).
   2. Clone this repo to `vault_path/.obsidian/plugins`
+  3. Turn on the plugin in *Community plugins* settings tab
 
   ## Features
 
