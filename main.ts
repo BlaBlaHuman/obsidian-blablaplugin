@@ -107,6 +107,30 @@ export default class BlaBlaPlugin extends Plugin {
 			inputTimeout = setTimeout(removeTODOsCallback, removeTODOsTimeout);
 		}))
 
+		const removeEmptyLines = this.addCommand({
+			id: 'remove-empty-lines',
+			name: 'Remove empty lines',
+			editorCallback: async (editor: Editor) => {
+				const noteFile = this.app.workspace.getActiveFile();
+				if (!noteFile) return;
+				let text = await this.app.vault.read(noteFile);
+				let found = false;
+				text = text.replace(/^\s*[\r\n]*/g, (_match, _cap) => {
+					found = true;
+					return '';
+				});
+				text = text.replace(/(\r?\n){3,}/g, (_match, _cap) => {
+					found = true;
+					return '\n\n';
+				});
+
+				if (!found)
+					return;
+
+				editor.setValue(text);
+			}
+		});
+		this.commands.push(removeEmptyLines)
 
 
 		this.addSettingTab(new BlaBlaSettingTab(this.app, this));
