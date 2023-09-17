@@ -15,7 +15,7 @@
 
   ### Copy / paste improvements
   * Copy only structural formatting by calling `Copy structural formatting only` command. It won't copy any html formatting tags.
-  * Copy plain Markdown with `Copy plain markdown` action. It will always strip *aliases*, *tag formatting* and *footnotes*. All other parameters can be changed in settings.
+  * Copy plain Markdown with `Copy plain markdown` action. It will always strip *aliases*, *tag formatting* and *footnotes*. All other parameters can be changed in settings. Note: many features were copied from [Copy as HTML](https://github.com/jenningsb2/copy-as-html) plugin.
 
   ### Daily notes enhancements
   * You can now open your daily notes for yesterday/today/tomorrow with dedicated actions! Also, there is a new ribbon icon with all these actions.
