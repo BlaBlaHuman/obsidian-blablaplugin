@@ -1,7 +1,5 @@
   # BlaBlaPlugin
 
-  Test task for *A distributed local-first note taking system* thesis project @ **JetBrains** by Oleg Makeev.
-
   ## Setting up
 
   1. Create a new dedicated vault (please, do not test it on your private vault).

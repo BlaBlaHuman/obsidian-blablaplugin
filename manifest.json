@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-plugin-test-task",
+	"id": "BlaBlaPlugin",
 	"name": "BlaBlaPlugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a test task for `A distributed local-first note taking system` thesis project",
+	"description": "A custom plugin that includes several features for formatting your files",
 	"author": "Oleg Makeev",
 	"authorUrl": "https://github.com/BlaBlaHuman",
 	"fundingUrl": "https://obsidian.md/pricing",
