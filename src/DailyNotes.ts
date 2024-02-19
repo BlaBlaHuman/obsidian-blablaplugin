@@ -48,8 +48,10 @@ export async function openOrCreateNote(plugin: BlaBlaPlugin, daysShift: number =
 
     if (!file) {
         const templateFile = plugin.app.vault.getAbstractFileByPath(`${dailyNotesSettings.templateFileLocation}.md`) as TFile;
-        if (!templateFile)
+        if (!templateFile) {
+            file = await plugin.app.vault.create(notePath, "");
             return;
+        }
         const templateText = await getExpandedTemplate(templateFile, plugin);
         file = await plugin.app.vault.create(notePath, templateText);
     }

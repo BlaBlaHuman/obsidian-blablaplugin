@@ -1,4 +1,5 @@
 import BlaBlaPlugin from "../main";
+import { DEFAULT_SETTINGS } from "./Settings";
 
 export function migrateTemplatesFolder(plugin: BlaBlaPlugin): string | undefined {
     try {
@@ -16,6 +17,7 @@ export function migrateTemplatesFolder(plugin: BlaBlaPlugin): string | undefined
         }
 
     } catch (error) {
+        console.log(error.message)
     }
 
     return undefined;
@@ -40,12 +42,13 @@ export function migrateDailyNotesSettings(plugin: BlaBlaPlugin): IDailyNotesSett
             dailyNotesPlugin.instance.options;
 
         return {
-            dateFormat: dailyNotesPluginSettings.format,
-            newFileLocation: dailyNotesPluginSettings.folder?.trim(),
-            templateFileLocation: dailyNotesPluginSettings.template?.trim(),
+            dateFormat: dailyNotesPluginSettings.format?.trim() ? dailyNotesPluginSettings.format : DEFAULT_SETTINGS.dateFormat,
+            newFileLocation: dailyNotesPluginSettings.folder?.trim() ?  dailyNotesPluginSettings.folder?.trim() : "/",
+            templateFileLocation: dailyNotesPluginSettings.template?.trim() ?? DEFAULT_SETTINGS.templateFolder,
         };
 
     } catch (error) {
+        console.log(error.message)
     }
 
     return undefined;
