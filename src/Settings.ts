@@ -6,7 +6,7 @@ export interface PluginSettings {
 	removeEmphasis: boolean;
 	removeTags: boolean;
 	removeComments: boolean;
-    migrateSettingsFromBuildinTemplates: boolean;
+    migrateSettingsFromBuiltinTemplates: boolean;
 	templateFolder: string | undefined;
     dateFormat: string;
     timeFormat: string;
@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	removeEmphasis: false,
 	removeTags: false,
 	removeComments: false,
-    migrateSettingsFromBuildinTemplates: true,
+    migrateSettingsFromBuiltinTemplates: true,
 	templateFolder: undefined,
     dateFormat: "YYYY-MM-DD",
     timeFormat: "HH:mm",
@@ -41,12 +41,12 @@ export class BlaBlaSettingTab extends PluginSettingTab {
         this.containerEl.createEl("h1", { text: "Template expanding" });
 
         new Setting(containerEl)
-			.setName('Migrate settings from buildin `Templates` plugin')
-			.setDesc('If enabled, template folder is taken from buildin `Templates` settings')
+			.setName('Migrate settings from builtin `Templates` plugin')
+			.setDesc('If enabled, template folder is taken from builtin `Templates` settings')
 			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.migrateSettingsFromBuildinTemplates)
+				.setValue(this.plugin.settings.migrateSettingsFromBuiltinTemplates)
 				.onChange(async (value) => {
-					this.plugin.settings.migrateSettingsFromBuildinTemplates = value;
+					this.plugin.settings.migrateSettingsFromBuiltinTemplates = value;
 					await this.plugin.saveSettings();
 				}));
 

@@ -29,7 +29,7 @@ export class TemplatesSuggestModal extends SuggestModal<TFile> {
 }
 
 function getTemplatesFolder(plugin: BlaBlaPlugin) {
-    if (plugin.settings.migrateSettingsFromBuildinTemplates) {
+    if (plugin.settings.migrateSettingsFromBuiltinTemplates) {
         let internalTemplateFolder = migrateTemplatesFolder(plugin);
         if (internalTemplateFolder == undefined) {
             new Notice("Builtin plugin `Templates` is not available")
